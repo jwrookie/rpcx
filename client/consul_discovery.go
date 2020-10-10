@@ -56,7 +56,7 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	d.stopCh = make(chan struct{})
 
 	ps, err := kv.List(basePath)
-	if err != nil {
+	if err != nil && err.Error() != store.ErrKeyNotFound.Error() {
 		log.Infof("cannot get services of from registry: %v, err: %v", basePath, err)
 		panic(err)
 	}
@@ -197,9 +197,7 @@ func (d *ConsulDiscovery) watch() {
 					ch := ch
 					go func() {
 						defer func() {
-							if r := recover(); r != nil {
-
-							}
+							recover()
 						}()
 						select {
 						case ch <- pairs:

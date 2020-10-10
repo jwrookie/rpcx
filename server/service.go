@@ -102,9 +102,12 @@ func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata s
 // RegisterFunctionName is like RegisterFunction but uses the provided name for the function
 // instead of the function's concrete type.
 func (s *Server) RegisterFunctionName(servicePath string, name string, fn interface{}, metadata string) error {
-	s.Plugins.DoRegisterFunction(servicePath, name, fn, metadata)
 	_, err := s.registerFunction(servicePath, fn, name, true)
-	return err
+	if err != nil {
+		return err
+	}
+	
+	return s.Plugins.DoRegisterFunction(servicePath, name, fn, metadata)
 }
 
 func (s *Server) register(rcvr interface{}, name string, useName bool) (string, error) {
@@ -241,7 +244,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		// Method needs four ins: receiver, context.Context, *args, *reply.
 		if mtype.NumIn() != 4 {
 			if reportErr {
-				log.Info("method", mname, " has wrong number of ins:", mtype.NumIn())
+				log.Debug("method ", mname, " has wrong number of ins:", mtype.NumIn())
 			}
 			continue
 		}
@@ -249,7 +252,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		ctxType := mtype.In(1)
 		if !ctxType.Implements(typeOfContext) {
 			if reportErr {
-				log.Info("method", mname, " must use context.Context as the first parameter")
+				log.Debug("method ", mname, " must use context.Context as the first parameter")
 			}
 			continue
 		}

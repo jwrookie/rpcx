@@ -7,8 +7,6 @@ import (
 	"sync"
 )
 
-const maxBufferSize = 1 << 16 // 64KiB
-
 var (
 	spWriter sync.Pool
 	spReader sync.Pool
@@ -31,9 +29,6 @@ func init() {
 func Unzip(data []byte) ([]byte, error) {
 	buf := spBuffer.Get().(*bytes.Buffer)
 	defer func() {
-		if buf.Cap() > maxBufferSize {
-			return
-		}
 		buf.Reset()
 		spBuffer.Put(buf)
 	}()
@@ -67,15 +62,10 @@ func Zip(data []byte) ([]byte, error) {
 	w.Reset(buf)
 
 	defer func() {
-		w.Close()
-		spWriter.Put(w)
-
-		if buf.Cap() > maxBufferSize {
-			return
-		}
 		buf.Reset()
 		spBuffer.Put(buf)
-
+		w.Close()
+		spWriter.Put(w)
 	}()
 	_, err := w.Write(data)
 	if err != nil {
